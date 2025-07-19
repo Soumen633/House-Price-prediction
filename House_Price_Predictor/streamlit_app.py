@@ -275,11 +275,11 @@ st.markdown(
 def load_model_artifacts():
     """Load the trained model and associated artifacts"""
     try:
-        model = joblib.load("models/house_price_model.pkl")  # Add models/
-        label_encoders = joblib.load("models/label_encoders.pkl")  # Add models/
-        feature_names = joblib.load("models/feature_names.pkl")  # Add models/
-        metrics = joblib.load("models/model_metrics.pkl")  # Add models/
-        feature_importance = pd.read_csv("models/feature_importance.csv")  # Add models/
+        model = joblib.load("House_Price_Predictor/models/house_price_model.pkl")  # Add models/
+        label_encoders = joblib.load("House_Price_Predictor/models/label_encoders.pkl")  # Add models/
+        feature_names = joblib.load("House_Price_Predictor/models/feature_names.pkl")  # Add models/
+        metrics = joblib.load("House_Price_Predictor/models/model_metrics.pkl")  # Add models/
+        feature_importance = pd.read_csv("House_Price_Predictor/models/feature_importance.csv")  # Add models/
         return model, label_encoders, feature_names, metrics, feature_importance
     except FileNotFoundError as e:
         st.error(
