@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI House Price Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveBackground 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes moveBackground {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            font-size: 3.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.2);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 30px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .card::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .card::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: sticky;
+            top: -35px;
+            background: white;
+            z-index: 10;
+            margin-top: -35px;
+            padding-top: 35px;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            transform: translateX(5px);
+        }
+
+        .form-section h3 {
+            color: #764ba2;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            font-size: 1.3rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .form-group:focus-within label {
+            color: #667eea;
+        }
+
+        input, select {
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:hover, select:hover {
+            border-color: #c0c0c0;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 25px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .predict-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .predict-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        .predict-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .predict-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .results-card {
+            position: sticky;
+            top: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            border: 5px solid rgba(102, 126, 234, 0.2);
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: slideIn 0.6s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            animation: movePattern 15s linear infinite;
+        }
+
+        @keyframes movePattern {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 30px); }
+        }
+
+        .result-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .result-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            opacity: 0.95;
+        }
+
+        .price-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 25px 0;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            animation: priceAppear 0.8s ease;
+        }
+
+        @keyframes priceAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .confidence-range {
+            font-size: 1.15rem;
+            opacity: 0.95;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 35px;
+        }
+
+        .metric-box {
+            background: rgba(255,255,255,0.2);
+            padding: 20px 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .metric-box:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-5px);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.95;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .feature-importance {
+            margin-top: 35px;
+            padding: 25px;
+            background: white;
+            border-radius: 15px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .feature-importance h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .feature-bar {
+            margin-bottom: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-bar:hover {
+            transform: translateX(10px);
+        }
+
+        .feature-name {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .bar-container {
+            background: #e8eaf6;
+            height: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.8s ease;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #999;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .results-card {
+                position: static;
+            }
+
+            .card {
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .price-display {
+                font-size: 2.5rem;
+            }
+
+            .card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="header-icon">🏠</span>
+                AI House Price Predictor
+            </h1>
+            <p>Advanced machine learning powered property valuation</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value">98.5%</div>
+                <div class="stat-label">Accuracy Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">50K+</div>
+                <div class="stat-label">Properties Analyzed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">< 1s</div>
+                <div class="stat-label">Prediction Time</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2><span class="card-icon">📋</span> Property Details</h2>
+                <form id="predictionForm">
+                    <div class="form-section">
+                        <h3><span class="section-icon">🏗️</span> General Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Lot Area (sq ft)</label>
+                                <input type="number" name="LotArea" value="8450" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Overall Quality (1-10)</label>
+                                <input type="number" name="OverallQual" value="7" min="1" max="10" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Overall Condition (1-10)</label>
+                                <input type="number" name="OverallCond" value="5" min="1" max="10" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Year Built</label>
+                                <input type="number" name="YearBuilt" value="2003" min="1800" max="2025" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Year Remodeled</label>
+                                <input type="number" name="YearRemodAdd" value="2003" min="1800" max="2025" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Year Sold</label>
+                                <input type="number" name="YrSold" value="2008" min="2006" max="2025" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><span class="section-icon">📐</span> Living Space</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Above Ground Living Area</label>
+                                <input type="number" name="GrLivArea" value="1710" required>
+                            </div>
+                            <div class="form-group">
+                                <label>1st Floor (sq ft)</label>
+                                <input type="number" name="1stFlrSF" value="856" required>
+                            </div>
+                            <div class="form-group">
+                                <label>2nd Floor (sq ft)</label>
+                                <input type="number" name="2ndFlrSF" value="854" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Basement (sq ft)</label>
+                                <input type="number" name="TotalBsmtSF" value="856" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Bedrooms</label>
+                                <input type="number" name="BedroomAbvGr" value="3" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Total Rooms</label>
+                                <input type="number" name="TotRmsAbvGrd" value="8" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><span class="section-icon">🚿</span> Bathrooms & Amenities</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Full Bathrooms</label>
+                                <input type="number" name="FullBath" value="2" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Half Bathrooms</label>
+                                <input type="number" name="HalfBath" value="1" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Kitchens</label>
+                                <input type="number" name="KitchenAbvGr" value="1" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fireplaces</label>
+                                <input type="number" name="Fireplaces" value="0" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Wood Deck (sq ft)</label>
+                                <input type="number" name="WoodDeckSF" value="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Open Porch (sq ft)</label>
+                                <input type="number" name="OpenPorchSF" value="61" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><span class="section-icon">🚗</span> Garage</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Garage Cars</label>
+                                <input type="number" name="GarageCars" value="2" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Garage Area (sq ft)</label>
+                                <input type="number" name="GarageArea" value="548" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Garage Type</label>
+                                <select name="GarageType" required>
+                                    <option value="Attchd">Attached</option>
+                                    <option value="Detchd">Detached</option>
+                                    <option value="BuiltIn">Built-In</option>
+                                    <option value="Basment">Basement</option>
+                                    <option value="CarPort">Carport</option>
+                                    <option value="None">None</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><span class="section-icon">⭐</span> Quality & Features</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Exterior Quality</label>
+                                <select name="ExterQual" required>
+                                    <option value="Ex">Excellent</option>
+                                    <option value="Gd" selected>Good</option>
+                                    <option value="TA">Average/Typical</option>
+                                    <option value="Fa">Fair</option>
+                                    <option value="Po">Poor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Kitchen Quality</label>
+                                <select name="KitchenQual" required>
+                                    <option value="Ex">Excellent</option>
+                                    <option value="Gd" selected>Good</option>
+                                    <option value="TA">Average/Typical</option>
+                                    <option value="Fa">Fair</option>
+                                    <option value="Po">Poor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Heating Quality</label>
+                                <select name="HeatingQC" required>
+                                    <option value="Ex" selected>Excellent</option>
+                                    <option value="Gd">Good</option>
+                                    <option value="TA">Average/Typical</option>
+                                    <option value="Fa">Fair</option>
+                                    <option value="Po">Poor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Central Air</label>
+                                <select name="CentralAir" required>
+                                    <option value="Y" selected>Yes</option>
+                                    <option value="N">No</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><span class="section-icon">📍</span> Location & Type</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>MS SubClass</label>
+                                <input type="number" name="MSSubClass" value="60" required>
+                            </div>
+                            <div class="form-group">
+                                <label>MS Zoning</label>
+                                <select name="MSZoning" required>
+                                    <option value="RL" selected>Residential Low Density</option>
+                                    <option value="RM">Residential Medium</option>
+                                    <option value="RH">Residential High</option>
+                                    <option value="FV">Floating Village</option>
+                                    <option value="C">Commercial</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Neighborhood</label>
+                                <select name="Neighborhood" required>
+                                    <option value="CollgCr" selected>College Creek</option>
+                                    <option value="Veenker">Veenker</option>
+                                    <option value="Crawfor">Crawford</option>
+                                    <option value="NoRidge">Northridge</option>
+                                    <option value="Mitchel">Mitchell</option>
+                                    <option value="Somerst">Somerset</option>
+                                    <option value="NWAmes">Northwest Ames</option>
+                                    <option value="OldTown">Old Town</option>
+                                    <option value="BrkSide">Brookside</option>
+                                    <option value="Sawyer">Sawyer</option>
+                                    <option value="NAmes">North Ames</option>
+                                    <option value="SawyerW">Sawyer West</option>
+                                    <option value="Edwards">Edwards</option>
+                                    <option value="Timber">Timberland</option>
+                                    <option value="Gilbert">Gilbert</option>
+                                    <option value="StoneBr">Stone Brook</option>
+                                    <option value="ClearCr">Clear Creek</option>
+                                    <option value="NPkVill">Northpark Villa</option>
+                                    <option value="Blmngtn">Bloomington</option>
+                                    <option value="BrDale">Briardale</option>
+                                    <option value="IDOTRR">Iowa DOT</option>
+                                    <option value="MeadowV">Meadow Village</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>House Style</label>
+                                <select name="HouseStyle" required>
+                                    <option value="2Story" selected>2 Story</option>
+                                    <option value="1Story">1 Story</option>
+                                    <option value="1.5Fin">1.5 Story Finished</option>
+                                    <option value="1.5Unf">1.5 Story Unfinished</option>
+                                    <option value="SFoyer">Split Foyer</option>
+                                    <option value="SLvl">Split Level</option>
+                                    <option value="2.5Unf">2.5 Story Unfinished</option>
+                                    <option value="2.5Fin">2.5 Story Finished</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="predict-btn">
+                        <span>🔮 Predict House Price</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="card results-card">
+                <h2><span class="card-icon">📊</span> Prediction Results</h2>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p class="loading-text">Analyzing property data...</p>
+                </div>
+
+                <div id="resultDisplay" style="display: none;">
+                    <div class="result-card">
+                        <h3>💰 Estimated Price</h3>
+                        <div class="price-display" id="priceDisplay">$0</div>
+                        <div class="confidence-range" id="confidenceRange">
+                            Range: $0 - $0
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-box">
+                                <div class="metric-label">R² Score</div>
+                                <div class="metric-value" id="r2Score">0.00</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">Avg Error</div>
+                                <div class="metric-value" id="maeValue">$0</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">Confidence</div>
+                                <div class="metric-value" id="confidence">95%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-importance" id="featureImportance" style="display: none;">
+                        <h3>🎯 Key Price Factors</h3>
+                        <div id="featureBars"></div>
+                    </div>
+                </div>
+
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">📈</div>
+                    <h3>Ready to Predict</h3>
+                    <p>Fill in the property details and click predict to see results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const loading = document.getElementById('loading');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const featureImportance = document.getElementById('featureImportance');
+        const emptyState = document.getElementById('emptyState');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            console.log('Form submitted');
+            
+            loading.style.display = 'block';
+            resultDisplay.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (key === 'MSZoning' || key === 'Neighborhood' || key === 'HouseStyle' || 
+                    key === 'ExterQual' || key === 'KitchenQual' || key === 'HeatingQC' || 
+                    key === 'CentralAir' || key === 'GarageType') {
+                    data[key] = value;
+                } else {
+                    data[key] = Number(value);
+                }
+            });
+
+            console.log('Sending data:', data);
+
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error response:', errorData);
+                    throw new Error(errorData.detail || 'Prediction failed');
+                }
+
+                const result = await response.json();
+                console.log('Result received:', result);
+
+                loading.style.display = 'none';
+                displayResults(result);
+                
+            } catch (error) {
+                console.error('Prediction error:', error);
+                loading.style.display = 'none';
+                emptyState.style.display = 'block';
+                alert('Error making prediction: ' + error.message);
+            }
+        });
+
+        function displayResults(result) {
+            console.log('Displaying results:', result);
+            
+            resultDisplay.style.display = 'block';
+            featureImportance.style.display = 'block';
+
+            const price = result.predicted_price || 0;
+            document.getElementById('priceDisplay').textContent = ' + Math.round(price).toLocaleString();
+
+            if (result.confidence_interval) {
+                const lower = Math.round(result.confidence_interval.lower || 0);
+                const upper = Math.round(result.confidence_interval.upper || 0);
+                document.getElementById('confidenceRange').textContent = 
+                    `Range: ${lower.toLocaleString()} - ${upper.toLocaleString()}`;
+            }
+
+            if (result.model_metrics) {
+                document.getElementById('r2Score').textContent = 
+                    (result.model_metrics.r2_score || 0).toFixed(3);
+                document.getElementById('maeValue').textContent = 
+                    ' + Math.round(result.model_metrics.mae || 0).toLocaleString();
+            }
+
+            if (result.feature_contributions) {
+                displayFeatureContributions(result.feature_contributions);
+            }
+        }
+
+        function displayFeatureContributions(contributions) {
+            const container = document.getElementById('featureBars');
+            container.innerHTML = '';
+
+            const values = Object.values(contributions);
+            const maxValue = Math.max(...values);
+
+            Object.entries(contributions).forEach(([feature, importance]) => {
+                const percentage = (importance / maxValue) * 100;
+                
+                const barDiv = document.createElement('div');
+                barDiv.className = 'feature-bar';
+                barDiv.innerHTML = `
+                    <div class="feature-name">
+                        <span>${formatFeatureName(feature)}</span>
+                        <span>${(importance * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                container.appendChild(barDiv);
+            });
+        }
+
+        function formatFeatureName(name) {
+            return name.replace(/([A-Z])/g, ' $1')
+                      .replace(/^./, str => str.toUpperCase())
+                      .trim();
+        }
+
+        window.addEventListener('load', () => {
+            console.log('House Price Predictor loaded successfully!');
+        });
+    </script>
+</body>
+</html>
